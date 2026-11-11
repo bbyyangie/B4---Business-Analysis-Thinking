@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Business Analysis Thinking — bộ slide trình chiếu">
+<title>Business Analysis Thinking — Slides</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b0d0e'/%3E%3Crect x='6' y='14' width='20' height='4' rx='2' fill='%23ffc83d'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #07090a;
+    --accent: #ffc83d;
+    --muted: rgba(255,255,255,.55);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    overflow: hidden;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body.idle { cursor: none; }
+  body.idle .chrome { opacity: 0; pointer-events: none; }
+  .chrome { transition: opacity .4s ease; }
+
+  .stage { position: fixed; inset: 0; }
+  .layer {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity .3s ease;
+  }
+  .layer.on { opacity: 1; }
+
+  .progress {
+    position: fixed; top: 0; left: 0; right: 0; height: 3px;
+    background: rgba(255,255,255,.08); z-index: 30;
+  }
+  .progress-bar {
+    height: 100%; width: 0;
+    background: var(--accent);
+    transition: width .3s ease;
+  }
+
+  .nav-btn {
+    position: fixed; top: 50%; transform: translateY(-50%);
+    z-index: 20;
+    width: 52px; height: 52px;
+    border: none; border-radius: 50%;
+    background: rgba(255,255,255,.07);
+    color: rgba(255,255,255,.75);
+    font-size: 22px; line-height: 1;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s ease, opacity .4s ease;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,.16); color: #fff; }
+  .nav-btn.prev { left: 16px; }
+  .nav-btn.next { right: 16px; }
+
+  .bottom {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    z-index: 20;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px;
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+  }
+  .counter {
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: .12em;
+    font-variant-numeric: tabular-nums;
+  }
+  .counter b { color: #fff; font-weight: 600; }
+  .actions { display: flex; gap: 10px; }
+  .icon-btn {
+    width: 40px; height: 40px;
+    border: none; border-radius: 10px;
+    background: rgba(255,255,255,.07);
+    color: rgba(255,255,255,.75);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s ease;
+  }
+  .icon-btn:hover { background: rgba(255,255,255,.16); color: #fff; }
+  .icon-btn svg { width: 18px; height: 18px; }
+
+  .hint {
+    position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%);
+    z-index: 25;
+    background: rgba(20,22,24,.9);
+    border: 1px solid rgba(255,255,255,.1);
+    color: rgba(255,255,255,.75);
+    font-size: 12.5px;
+    padding: 9px 16px; border-radius: 99px;
+    white-space: nowrap;
+    transition: opacity .6s ease;
+    pointer-events: none;
+  }
+  .hint b { color: var(--accent); font-weight: 600; }
+  .hint.hide { opacity: 0; }
+
+  .overview {
+    position: fixed; inset: 0; z-index: 40;
+    background: rgba(7,9,10,.97);
+    overflow-y: auto;
+    display: none;
+    padding: 28px clamp(16px, 4vw, 48px) 48px;
+  }
+  .overview.open { display: block; }
+  .overview-head {
+    display: flex; align-items: center; justify-content: space-between;
+    max-width: 1280px; margin: 0 auto 20px;
+    color: #fff; font-size: 15px; letter-spacing: .06em;
+  }
+  .overview-head span { color: var(--muted); font-size: 12.5px; }
+  .grid {
+    max-width: 1280px; margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 14px;
+  }
+  .thumb {
+    position: relative;
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #101214;
+    padding: 0; cursor: pointer;
+    transition: border-color .15s ease, transform .15s ease;
+  }
+  .thumb:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.35); }
+  .thumb.current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .thumb img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
+  .thumb .num {
+    position: absolute; top: 8px; left: 8px;
+    background: rgba(0,0,0,.65);
+    color: rgba(255,255,255,.85);
+    font-size: 11px; letter-spacing: .08em;
+    padding: 3px 8px; border-radius: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+</head>
+<body>
+
+<main class="stage" id="stage">
+  <img class="layer" id="layerA" alt="Slide" draggable="false">
+  <img class="layer" id="layerB" alt="Slide" draggable="false">
+</main>
+
+<div class="progress chrome"><div class="progress-bar" id="bar"></div></div>
+
+<button class="nav-btn prev chrome" id="btnPrev" aria-label="Slide trước">&#8249;</button>
+<button class="nav-btn next chrome" id="btnNext" aria-label="Slide sau">&#8250;</button>
+
+<div class="bottom chrome">
+  <div class="counter"><b id="cur">01</b>&nbsp;/&nbsp;<span id="total">15</span></div>
+  <div class="actions">
+    <button class="icon-btn" id="btnGrid" aria-label="Lưới slide" title="Lưới slide (G)">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3zM13 3h8v8h-8zM3 13h8v8H3zM13 13h8v8h-8z"/></svg>
+    </button>
+    <button class="icon-btn" id="btnFs" aria-label="Toàn màn hình" title="Toàn màn hình (F)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="hint chrome" id="hint">Để chuyển slide dùng <b>← →</b> hoặc click/swipe &nbsp;•&nbsp; <b>G</b> lưới &nbsp;•&nbsp; <b>F</b> toàn màn hình</div>
+
+<div class="overview" id="overview">
+  <div class="overview-head">
+    <div>Business Analysis Thinking</div>
+    <span>Nhấn G hoặc Esc để đóng</span>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+  const TOTAL = 15;
+  const src = i => `slides/${i}.png`;
+  const pad = n => String(n).padStart(2, '0');
+
+  let cur = 1;
+  const h = parseInt(location.hash.slice(1), 10);
+  if (h >= 1 && h <= TOTAL) cur = h;
+
+  const layers = [
+    document.getElementById('layerA'),
+    document.getElementById('layerB')
+  ];
+  let active = 0;
+
+  const bar = document.getElementById('bar');
+  const curEl = document.getElementById('cur');
+  const overview = document.getElementById('overview');
+  const grid = document.getElementById('grid');
+  const body = document.body;
+
+  function render() {
+    bar.style.width = (cur / TOTAL * 100) + '%';
+    curEl.textContent = pad(cur);
+    history.replaceState(null, '', '#' + cur);
+    document.querySelectorAll('.thumb').forEach(t =>
+      t.classList.toggle('current', +t.dataset.i === cur));
+    for (let d = -2; d <= 2; d++) {
+      const n = cur + d;
+      if (n >= 1 && n <= TOTAL) { const im = new Image(); im.src = src(n); }
+    }
+  }
+
+  function show() {
+    const nextL = layers[1 - active];
+    const prevL = layers[active];
+    nextL.src = src(cur);
+    const swap = () => {
+      nextL.classList.add('on');
+      prevL.classList.remove('on');
+      active = 1 - active;
+    };
+    if (nextL.decode) nextL.decode().then(swap, swap);
+    else nextL.onload = swap;
+    render();
+  }
+
+  function go(i) {
+    const n = Math.min(TOTAL, Math.max(1, i));
+    if (n === cur) return;
+    cur = n;
+    show();
+  }
+  const next = () => go(cur + 1);
+  const prev = () => go(cur - 1);
+
+  // build overview grid
+  for (let i = 1; i <= TOTAL; i++) {
+    const b = document.createElement('button');
+    b.className = 'thumb';
+    b.dataset.i = i;
+    b.innerHTML = `<img loading="lazy" src="${src(i)}" alt="Slide ${i}"><span class="num">${pad(i)}</span>`;
+    b.addEventListener('click', () => { toggleOverview(false); go(i); });
+    grid.appendChild(b);
+  }
+
+  function toggleOverview(force) {
+    const open = force !== undefined ? force : !overview.classList.contains('open');
+    overview.classList.toggle('open', open);
+    if (open) {
+      body.classList.remove('idle');
+      const el = overview.querySelector('.thumb.current');
+      if (el) el.scrollIntoView({ block: 'center' });
+    }
+  }
+
+  // fullscreen
+  function toggleFs() {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen().catch(() => {});
+  }
+
+  // controls
+  document.getElementById('btnPrev').addEventListener('click', prev);
+  document.getElementById('btnNext').addEventListener('click', next);
+  document.getElementById('btnGrid').addEventListener('click', () => toggleOverview());
+  document.getElementById('btnFs').addEventListener('click', toggleFs);
+  overview.addEventListener('click', e => { if (e.target === overview) toggleOverview(false); });
+
+  document.getElementById('stage').addEventListener('click', e => {
+    if (overview.classList.contains('open')) return;
+    const x = e.clientX / window.innerWidth;
+    if (x > 0.5) next(); else prev();
+  });
+
+  // keyboard
+  addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') go(1);
+    else if (e.key === 'End') go(TOTAL);
+    else if (e.key.toLowerCase() === 'g') toggleOverview();
+    else if (e.key.toLowerCase() === 'f') toggleFs();
+    else if (e.key === 'Escape') toggleOverview(false);
+  });
+
+  // touch swipe
+  let sx = 0, sy = 0;
+  addEventListener('touchstart', e => {
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+  }, { passive: true });
+  addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) (dx < 0 ? next() : prev());
+  }, { passive: true });
+
+  // auto-hide chrome
+  let hideTimer;
+  function wake() {
+    body.classList.remove('idle');
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => {
+      if (!overview.classList.contains('open')) body.classList.add('idle');
+    }, 3000);
+  }
+  addEventListener('mousemove', wake);
+  addEventListener('touchstart', wake, { passive: true });
+  addEventListener('keydown', wake);
+
+  // init
+  document.getElementById('total').textContent = pad(TOTAL);
+  layers[0].src = src(cur);
+  layers[0].classList.add('on');
+  active = 0;
+  render();
+  wake();
+  setTimeout(() => document.getElementById('hint').classList.add('hide'), 6000);
+</script>
+</body>
+</html>
